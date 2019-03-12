@@ -13,8 +13,6 @@ external_pause - sends command to pause/resume an agent now if not on a call, or
 external_hangup - sends command to hangup the current phone call for one specific agent(Hangup Customer)
 
 
-## Process at 2019-03-12 
-
 ### START Call
 	Set pause -> AGENT_API.external_pause
 	Set value the pause -> AGENT_API.pause_code
