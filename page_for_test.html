@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>JS Bin</title>
+</head>
+<body>
+
+    <button id="myBtn">START</button>
+    <button id="myBtn2">STOP</button>
+    <button id="myBtn3">TESTE</button>
+
+
+  <script>
+
+document.getElementById("myBtn").addEventListener("click", _doCall);
+document.getElementById("myBtn2").addEventListener("click", _endCall);
+document.getElementById("myBtn3").addEventListener("click", teste);
+
+let nectarWebphone = window.nectarWebphone;
+let urlServidor = 'http://IP_Vicidial';
+let source = "CallNectarAPI"
+let user = "userApi"
+let pass = "passApi"
+let numero = "telephone_client";
+let agent_user = "user_logged";
+
+let endpointChamada = `${urlServidor}/agc/api.php`;
+let endpointChamadaStatus = `${urlServidor}/vicidial/non_agent_api.php`;
+//let endpointBuscarLigacao = `${urlServidor}mp3/`;
+
+let myHeaders = new Headers();
+myHeaders.append("Content-Type", "application/json");
+
+// -------------------------------------------------------------------------- REALIZANDO UMA LIGACAO
+let checkCall = null;
+let idLigacao = null;
+
+let urlPause = `${endpointChamada}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_pause&value=PAUSE`;
+
+let urlValuePause = `${endpointChamada}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=pause_code&value=NECTAR`;
+
+function teste(){
+     let cfg = {
+        method: 'GET',
+        mode: 'cors',
+        'Access-Control-Allow-Origin':'*'
+    };
+    let urlt1 = `${endpointChamadaStatus}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=agent_status&stage=csv&header=YES`;
+
+    fetch(urlt1 , cfg)
+    .then(response => {
+        return response.text();
+    }) 
+    .then(function (resposta) {
+        debugger;
+            console.log(resposta);
+            _validadeCall(resposta);
+            loadinCall = false;
+        })
+    .catch((error) => {
+        loadinCall = false;
+        handleError(error, true);
+    });
+    // var xhr = new XMLHttpRequest();
+    // xhr.open('GET', urlt1, true);
+    // xhr.send();
+}
+
+function _doCall(params) {
+
+    let nectarWebphone = window.nectarWebphone;
+    //Validace tem algum numero setado na variavel 
+    if (!numero) {
+        alert("Numero não foi encontrado")
+    } 
+    //valida se o usuario tem o user_vicidial configurado
+    else if (!agent_user) {
+        alert("O usuário do Vicidial referente ao usuário não foi configurado")
+    }
+
+    //Remove o prefixo do pais Brasil
+    if(numero.startsWith("+55")){
+        numero = numero.substring(3, numero.length);
+    }else if(numero.startsWith("55")){
+        numero = numero.substring(2, numero.length);
+    }
+
+    //Valida se o usuário já esta em uma ligação
+    if (idLigacao) {
+        alert('Uma ligação já esta em andamento');
+        return false;
+    }
+    idLigacao = true;
+
+    let cfg = {
+        method: 'GET',
+        headers: myHeaders
+    };
+
+    let url1 = `${endpointChamada}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_pause&value=PAUSE`;
+    fetch(url1, cfg)
+    .then(response => {
+        return response.text().then(function (text) {
+                let resposta = text ? JSON.parse(text) : {};
+                if (response.status !== 200) {
+                    throw Error(resposta.mensagem);
+                }
+                return Promise.resolve(resposta);
+                
+            });
+    });
+    
+  debugger;
+
+    let url2 = `${endpointChamada}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=pause_code&value=NECTAR`;
+    fetch(url2, cfg);
+
+    
+
+    let url = `${endpointChamada}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_dial&phone_code=1&search=YES&preview=NO&focus=YES&value=${numero}`;
+// debugger;
+    fetch(url, cfg)
+        .then(response => {
+            return response.text().then(function (text) {
+                let resposta = text ? JSON.parse(text) : {};
+                if (response.status !== 200) {
+                    throw Error(resposta.mensagem);
+                }
+                return Promise.resolve(resposta);
+                
+            });
+        })
+        .then(resposta => {
+            idLigacao = resposta.id;
+            nectarWebphone.notify("call:start");
+            nectarWebphone.notify("call:id", {id: idLigacao});
+            // QUANDO A LIGACAO E FEITA, FICAMOS MONITORANDO O STATUS DELA ATE QUE SEJA ENCERRADA
+            // checkCall = setInterval(() => {
+            //     _getCall()
+            // }, 2000)
+        })
+        .catch(resposta => {
+            idLigacao = null;
+            // handleError(resposta, true);
+        });
+};
+
+// -------------------------------------------------------------------------- MONITORA O STATUS DA LIGACAO
+let loadinCall = false;
+let _getCall = function () {
+
+    let url = `${endpointChamada}chamada?id=${idLigacao}&chave_api=${chaveAPI}`;
+    let cfg = {method: 'GET'};
+
+    fetch(url, cfg)
+        .then(function (response) {
+            return response.text().then(function (text) {
+                let resposta = text ? JSON.parse(text) : {};
+                if (response.status !== 200) {
+                    throw Error(resposta.mensagem);
+                }
+                return Promise.resolve(resposta);
+            });
+        })
+        .then(function (resposta) {
+            console.log(resposta);
+            _validadeCall(resposta);
+            loadinCall = false;
+        })
+        .catch((error) => {
+            loadinCall = false;
+            handleError(error, true);
+        });
+};
+let lastStatus = null;
+let _validadeCall = (callInfo) => {
+    if (callInfo && callInfo.status) {
+        let status = callInfo.status.toLowerCase(); //esse saos os possiveis status que o servico da itvix me retorna
+        let finalizar = false;
+        if(lastStatus != null && lastStatus === status){
+            return false;
+        }
+        lastStatus = status;
+        switch (status) {
+            case "agent_user chamando":
+                nectarWebphone.notify("call:preparing");
+                break;
+            case "discando":
+                nectarWebphone.notify("call:preparing");
+                break;
+            case "telefone chamando":
+                nectarWebphone.notify("call:start");
+                break;
+            case "chamada em curso":
+                nectarWebphone.notify("call:answered");
+                break;
+            case "atendida":
+                var call = {
+                    url: `${endpointBuscarLigacao}${callInfo.arquivo_audio}`
+                };
+                nectarWebphone.notify("call:end", call);
+                finalizar = true;
+                break;
+            case "nao atendida":
+                nectarWebphone.notify("call:not_answered");
+                finalizar = true;
+                break;
+            case "telefone ocupado":
+                nectarWebphone.notify("call:not_answered");
+                finalizar = true;
+                break;
+            case "a ligacao falhou":
+                nectarWebphone.notify("call:erro");
+                handleError(status, false);
+                finalizar = true;
+                break;
+        }
+        if (finalizar) {
+            cancelInterval();
+        }
+    }
+}
+
+// --------------------------------------------------------------------------  Report in pop-up
+let handleError = (msg, supress) => {
+    if (typeof msg === 'object' && msg.message) {
+        msg = msg.message;
+        supress = false;
+    }
+    if (msg) {
+        if (!supress) {
+            alert(msg);
+        }
+        console.error(msg);
+    }
+    nectarWebphone.notify("erro");
+    cancelInterval();
+};
+let cancelInterval = function () {
+    if (checkCall) {
+        clearInterval(checkCall);
+        checkCall = null;
+        idLigacao = null;
+    }
+};
+
+
+// -------------------------------------------------------------------------- DELISGA A LIGAÇÂO
+function _endCall() {
+    if (!idLigacao) {
+        return false;
+    }
+    debugger;
+    let endingCall = false;
+    let url = `${endpointChamada}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_hangup&value=1`;
+    let url = `${endpointChamada}chamada?id=${idLigacao}&chave_api=${chaveAPI}`;
+    let cfg = {method: 'DELETE'};
+
+    fetch(url, cfg)
+        .then(function (response) {
+            return response.text().then(function (text) {
+                let resposta = text ? JSON.parse(text) : {};
+                if (response.status !== 200) {
+                    throw Error(resposta.mensagem);
+                }
+                return Promise.resolve(resposta);
+            });
+        })
+        .then(function (resposta) {
+            console.log(resposta);
+            endingCall = false;
+        })
+        .catch((error) => {
+            endingCall = false;
+            handleError(error, true);
+        });
+
+}
+
+let events = nectarWebphone.getEvents();
+events.register("call:new", _doCall);
+events.register("call:end", _endCall);
+
+
+ </script>
+</body>
+</html>
