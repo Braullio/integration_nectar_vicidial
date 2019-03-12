@@ -15,20 +15,20 @@ external_hangup - sends command to hangup the current phone call for one specifi
 
 ## Process at 2019-03-12 
 
-// START Call
-	Set pause -> AGENT_API.external_pause
-	Set value the pause -> AGENT_API.pause_code
-	Start call -> AGENT_API.external_dial
-
-// Check status of Call
-	Get call_id -> NON-AGENT.agent_status
-	Get status od call -> NON-AGENT.callid_info
-
-// STOP Call
-	Stop call -> AGENT_API.external_hangup
-	Set pause -> AGENT_API.external_pause
-	Set value the pause -> AGENT_API.pause_code
-	Unset pause -> AGENT_API.external_pause
+>> // START Call
+>>	Set pause -> AGENT_API.external_pause
+>>	Set value the pause -> AGENT_API.pause_code
+>>	Start call -> AGENT_API.external_dial
+>>
+>> // Check status of Call
+>>	Get call_id -> NON-AGENT.agent_status
+>>	Get status od call -> NON-AGENT.callid_info
+>> 
+>> // STOP Call
+>> 	Stop call -> AGENT_API.external_hangup
+>> 	Set pause -> AGENT_API.external_pause
+>> 	Set value the pause -> AGENT_API.pause_code
+>> 	Unset pause -> AGENT_API.external_pause
 
 [//]: # (LINKS)
 [Bootstrap 4.3]: <https://getbootstrap.com/docs/4.3/getting-started/introduction/>
