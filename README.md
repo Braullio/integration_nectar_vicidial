@@ -1,4 +1,4 @@
-# Integration Nectar CRM with Vicidial for click to call in Nectar
+# Integration Nectar CRM with Vicidial for click to call
 
 ### [NON-AGENT API DOCUMENT]
 
