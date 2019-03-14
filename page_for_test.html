@@ -11,13 +11,12 @@
     <button id="myBtn2">STOP</button>
     <button id="myBtn3">TESTE</button>
 
-
-  <script>
-
+<script>
 document.getElementById("myBtn").addEventListener("click", _doCall);
 document.getElementById("myBtn2").addEventListener("click", _endCall);
 document.getElementById("myBtn3").addEventListener("click", teste);
 
+// Set variables
 let nectarWebphone = window.nectarWebphone;
 let urlServidor = 'http://IP_Vicidial';
 let source = "CallNectarAPI"
@@ -25,48 +24,33 @@ let user = "userApi"
 let pass = "passApi"
 let numero = "telephone_client";
 let agent_user = "user_logged";
-
-let endpointChamada = `${urlServidor}/agc/api.php`;
-let endpointChamadaStatus = `${urlServidor}/vicidial/non_agent_api.php`;
-//let endpointBuscarLigacao = `${urlServidor}mp3/`;
+let AGENT_API = `${urlServidor}/agc/api.php`;
+let NON_AGENT = `${urlServidor}/vicidial/non_agent_api.php`;
 
 let myHeaders = new Headers();
 myHeaders.append("Content-Type", "application/json");
+let valueGet = {method: 'GET',mode: 'cors','Access-Control-Allow-Origin':'*'};
 
-// -------------------------------------------------------------------------- REALIZANDO UMA LIGACAO
 let checkCall = null;
 let idLigacao = null;
 
-let urlPause = `${endpointChamada}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_pause&value=PAUSE`;
+// URLs Vicidial AGENT_API
+let urlSetPause = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_pause&value=PAUSE`;
+let urlValuePause = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=pause_code&value=NECTAR`;
+let urlStartCall = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_dial&phone_code=1&search=YES&preview=NO&focus=YES&value=${numero}`;
+let urlStopCall = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_hangup&value=1`;
+let urlUnsetPause = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_pause&value=RESUME`;
 
-let urlValuePause = `${endpointChamada}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=pause_code&value=NECTAR`;
+// URLs Vicidial NON_AGENT
+let urlGetCallID = `${NON_AGENT}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=agent_status&stage=csv&header=YES`;
+let urlGetStatus = `${NON_AGENT}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=callid_info&call_id=${call_id}&stage=csv&header=YES&detail=YES`;
 
+// -------------------------------------------------------------------------- START BTN 3
 function teste(){
-     let cfg = {
-        method: 'GET',
-        mode: 'cors',
-        'Access-Control-Allow-Origin':'*'
-    };
-    let urlt1 = `${endpointChamadaStatus}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=agent_status&stage=csv&header=YES`;
-
-    fetch(urlt1 , cfg)
-    .then(response => {
-        return response.text();
-    }) 
-    .then(function (resposta) {
-        debugger;
-            console.log(resposta);
-            _validadeCall(resposta);
-            loadinCall = false;
-        })
-    .catch((error) => {
-        loadinCall = false;
-        handleError(error, true);
-    });
-    // var xhr = new XMLHttpRequest();
-    // xhr.open('GET', urlt1, true);
-    // xhr.send();
+    sendGet(urlGetCallID);
 }
+
+// -------------------------------------------------------------------------- END BTN 3
 
 function _doCall(params) {
 
@@ -94,13 +78,13 @@ function _doCall(params) {
     }
     idLigacao = true;
 
-    let cfg = {
+    let valueGet = {
         method: 'GET',
         headers: myHeaders
     };
 
-    let url1 = `${endpointChamada}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_pause&value=PAUSE`;
-    fetch(url1, cfg)
+    let url1 = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_pause&value=PAUSE`;
+    fetch(url1, valueGet)
     .then(response => {
         return response.text().then(function (text) {
                 let resposta = text ? JSON.parse(text) : {};
@@ -114,14 +98,14 @@ function _doCall(params) {
     
   debugger;
 
-    let url2 = `${endpointChamada}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=pause_code&value=NECTAR`;
-    fetch(url2, cfg);
+    let url2 = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=pause_code&value=NECTAR`;
+    fetch(url2, valueGet);
 
     
 
-    let url = `${endpointChamada}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_dial&phone_code=1&search=YES&preview=NO&focus=YES&value=${numero}`;
+    let url = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_dial&phone_code=1&search=YES&preview=NO&focus=YES&value=${numero}`;
 // debugger;
-    fetch(url, cfg)
+    fetch(url, valueGet)
         .then(response => {
             return response.text().then(function (text) {
                 let resposta = text ? JSON.parse(text) : {};
@@ -151,10 +135,10 @@ function _doCall(params) {
 let loadinCall = false;
 let _getCall = function () {
 
-    let url = `${endpointChamada}chamada?id=${idLigacao}&chave_api=${chaveAPI}`;
-    let cfg = {method: 'GET'};
+    let url = `${AGENT_API}chamada?id=${idLigacao}&chave_api=${chaveAPI}`;
+    let valueGet = {method: 'GET'};
 
-    fetch(url, cfg)
+    fetch(url, valueGet)
         .then(function (response) {
             return response.text().then(function (text) {
                 let resposta = text ? JSON.parse(text) : {};
@@ -254,11 +238,11 @@ function _endCall() {
     }
     debugger;
     let endingCall = false;
-    let url = `${endpointChamada}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_hangup&value=1`;
-    let url = `${endpointChamada}chamada?id=${idLigacao}&chave_api=${chaveAPI}`;
-    let cfg = {method: 'DELETE'};
+    let url = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_hangup&value=1`;
+    let url = `${AGENT_API}chamada?id=${idLigacao}&chave_api=${chaveAPI}`;
+    let valueGet = {method: 'DELETE'};
 
-    fetch(url, cfg)
+    fetch(url, valueGet)
         .then(function (response) {
             return response.text().then(function (text) {
                 let resposta = text ? JSON.parse(text) : {};
@@ -283,7 +267,33 @@ let events = nectarWebphone.getEvents();
 events.register("call:new", _doCall);
 events.register("call:end", _endCall);
 
+// Function by sleep
+function sleep(milliseconds) {
+  var start = new Date().getTime();
+  for (var i = 0; i < 1e7; i++) {
+    if ((new Date().getTime() - start) > milliseconds){
+      break;
+    }
+  }
+}
 
- </script>
+// Send get for URL received
+function sendGet(urlReceived){
+    fetch(urlReceived , valueGet)
+    .then(response => {
+        return response.text();
+    }) 
+    .then(function (resposta) {
+            console.log(resposta);
+            _validadeCall(resposta);
+            loadinCall = false;
+        })
+    .catch((error) => {
+        loadinCall = false;
+        handleError(error, true);
+    });
+}
+
+</script>
 </body>
 </html>
