@@ -6,18 +6,15 @@
   <title>JS Bin</title>
 </head>
 <body>
-
     <button id="myBtn">START</button>
     <button id="myBtn2">STOP</button>
     <button id="myBtn3">TEST</button>
     <br>
     <p id="pResponse1">
-
 <script>
-
 document.getElementById("myBtn").addEventListener("click", _doCall);
 document.getElementById("myBtn2").addEventListener("click", _endCall);
-document.getElementById("myBtn3").addEventListener("click", test);
+document.getElementById("myBtn3").addEventListener("click", _test);
 
 // Set variables
 let nectarWebphone = window.nectarWebphone;
@@ -27,7 +24,7 @@ let user = "userApi"
 let pass = "passApi"
 let numero = "telephone_client";
 let agent_user = "user_logged";
-let AGENT_API = `${urlServidor}/agc/api.php`;
+t AGENT_API = `${urlServidor}/agc/api.php`;
 let NON_AGENT = `${urlServidor}/vicidial/non_agent_api.php`;
 
 let myHeaders = new Headers();
@@ -48,88 +45,8 @@ let urlUnsetPause = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&age
 let urlGetCallID = `${NON_AGENT}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=agent_status&stage=csv&header=YES`;
 let urlGetStatus = `${NON_AGENT}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=callid_info&call_id=${call_id}&stage=csv&header=YES&detail=YES`;
 
-// BTN test
-function test(){
-    sendGet(urlGetCallID,'1');
-}
 
-// -------------------------------------------------------------------------- END BTN 3
-
-function _doCall(params) {
-
-    let nectarWebphone = window.nectarWebphone;
-    //Check is number phone was fill 
-    if (!numero) {
-        alert("Numero não foi encontrado")
-    } 
-    //Check is user for Vicidial was fill
-    else if (!agent_user) {
-        alert("Não foi configurado o parametro referente ao usuário do Vicidial")
-    }
-
-    //Remove prefix from Brasil
-    if(numero.startsWith("+55")){
-        numero = numero.substring(3, numero.length);
-    }else if(numero.startsWith("55")){
-        numero = numero.substring(2, numero.length);
-    }
-
-    //Check is user it's at call
-    if (idForCall) {
-        alert('Já existe uma ligação em andamento');
-        return false;
-    }
-    idForCall = true;
-
-    let url1 = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_pause&value=PAUSE`;
-    fetch(url1, valueGet)
-    .then(response => {
-        return response.text().then(function (text) {
-                let resposta = text ? JSON.parse(text) : {};
-                if (response.status !== 200) {
-                    throw Error(resposta.mensagem);
-                }
-                return Promise.resolve(resposta);
-                
-            });
-    });
-    
-  debugger;
-
-    let url2 = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=pause_code&value=NECTAR`;
-    fetch(url2, valueGet);
-
-    
-
-    let url = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_dial&phone_code=1&search=YES&preview=NO&focus=YES&value=${numero}`;
-// debugger;
-    fetch(url, valueGet)
-        .then(response => {
-            return response.text().then(function (text) {
-                let resposta = text ? JSON.parse(text) : {};
-                if (response.status !== 200) {
-                    throw Error(resposta.mensagem);
-                }
-                return Promise.resolve(resposta);
-                
-            });
-        })
-        .then(resposta => {
-            idForCall = resposta.id;
-            nectarWebphone.notify("call:start");
-            nectarWebphone.notify("call:id", {id: idForCall});
-            // QUANDO A LIGACAO E FEITA, FICAMOS MONITORANDO O STATUS DELA ATE QUE SEJA ENCERRADA
-            // checkCall = setInterval(() => {
-            //     _getCall()
-            // }, 2000)
-        })
-        .catch(resposta => {
-            idForCall = null;
-            // handleError(resposta, true);
-        });
-};
-
-// -------------------------------------------------------------------------- MONITORA O STATUS DA LIGACAO
+// ----------------------------------- START Editing
 let loadinCall = false;
 let _getCall = function () {
 
@@ -220,6 +137,7 @@ let handleError = (msg, supress) => {
     nectarWebphone.notify("erro");
     cancelInterval();
 };
+
 let cancelInterval = function () {
     if (checkCall) {
         clearInterval(checkCall);
@@ -228,43 +146,46 @@ let cancelInterval = function () {
     }
 };
 
-// -------------------------------------------------------------------------- DELISGA A LIGAÇÂO
-function _endCall() {
-    if (!idForCall) {
-        return false;
-    }
-    debugger;
-    let endingCall = false;
-    let url = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_hangup&value=1`;
-    let url = `${AGENT_API}chamada?id=${idForCall}&chave_api=${chaveAPI}`;
-    let valueGet = {method: 'DELETE'};
 
-    fetch(url, valueGet)
-        .then(function (response) {
-            return response.text().then(function (text) {
-                let resposta = text ? JSON.parse(text) : {};
-                if (response.status !== 200) {
-                    throw Error(resposta.mensagem);
-                }
-                return Promise.resolve(resposta);
-            });
-        })
-        .then(function (resposta) {
-            console.log(resposta);
-            endingCall = false;
-        })
-        .catch((error) => {
-            endingCall = false;
-            handleError(error, true);
-        });
 
-}
+// ----------------------------------- STOP Editing
+
+
 
 let events = nectarWebphone.getEvents();
 events.register("call:new", _doCall);
 events.register("call:end", _endCall);
 
-// Function by sleep
+
+// FUNCTION'S
+
+// TESTE Temporary
+function _test(){
+    sendGet(urlGetCallID,'2');
+}
+
+// Start call
+function _doCall(params) {
+    let nectarWebphone = window.nectarWebphone;
+    checkSetNumber();
+    checkSetUserVicidial();
+    checkAndRemovePrefixBR();
+    checkForCall(idForCall,'0');
+    sendGet(urlSetPause,'0');
+    sendGet(urlValuePause,'0');
+    sendGet(urlStartCall,'1');
+};
+
+// STOP Call
+function _endCall() {
+    checkForCall(idForCall,'1');
+    sendGet(urlStopCall,'3');
+    sendGet(urlSetPause,'0');
+    sendGet(urlValuePause,'0');
+    sendGet(urlUnsetPause,'0');
+}
+
+// For sleep
 function sleep(milliseconds) {
   var start = new Date().getTime();
   for (var i = 0; i < 1e7; i++) {
@@ -283,14 +204,49 @@ function sendGet(urlReceived,option){
     .then(function (resposta) {
         if (resposta.match(/ERROR: agent_status AGENT NOT LOGGED IN.*/)) { alert("Não foi encontrado ó login do usuário " + agent_user);}
         else{
-            if (option == 1) { console.log(resposta); document.getElementById("pResponse1").innerHTML = resposta; _validateCall(resposta); loadinCall = false; }
-            if (option == 2) { idForCall = resposta.id; document.getElementById("pResponse1").innerHTML = resposta; nectarWebphone.notify("call:start"); nectarWebphone.notify("call:id", {id: idForCall}); checkCall = setInterval(() => {  _getCall() }, 2000); }  
+            if (option == 0) { ; }  
+            if (option == 1) { idForCall = resposta.id; document.getElementById("pResponse1").innerHTML = resposta; nectarWebphone.notify("call:start"); nectarWebphone.notify("call:id", {id: idForCall}); checkCall = setInterval(() => {  _getCall() }, 2000); }  
+            if (option == 2) { console.log(resposta); document.getElementById("pResponse1").innerHTML = resposta; _validateCall(resposta); loadinCall = false; }
+            if (option == 3) { console.log(resposta); endingCall = false; }
         }
     })
     .catch((error) => {
-        if (option == 1) { loadinCall = false; handleError(error, true); } 
-        if (option == 2) { idForCall = null; handleError(resposta, true); }
+        if (option == 0) { ; }  
+        if (option == 1) { idForCall = null; handleError(resposta, true); }
+        if (option == 2) { loadinCall = false; handleError(error, true); } 
+        if (option == 3) { endingCall = false; handleError(error, true); } 
     });
+}
+
+// Check is user it's at call
+function checkForCall(idCall,option){
+    if (option == 0) { if (idCall) { alert('Já existe uma ligação em andamento'); return false; } idForCall = true; }
+    if (option == 1) { if (!idCall) { return false; } }
+}
+
+// Check is number phone was fill 
+function checkSetNumber(){
+    if (!numero) {
+        alert("Numero não foi encontrado")
+        return false;
+    } 
+}
+
+// Check is user for Vicidial was fill
+function checkSetUserVicidial(){
+    if (!agent_user) {
+        alert("Não foi configurado o parametro referente ao usuário do Vicidial")
+        return false;
+    }
+}
+
+// Remove prefix from Brasil
+function checkAndRemovePrefixBR(){
+    if(numero.startsWith("+55")){
+        numero = numero.substring(3, numero.length);
+    }else if(numero.startsWith("55")){
+        numero = numero.substring(2, numero.length);
+    }
 }
 
 </script>
