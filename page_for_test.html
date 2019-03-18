@@ -1,22 +1,14 @@
-<!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width">
-  <title>JS Bin</title>
-</head>
 <body>
-    <button id="myBtn">START</button>
-    <button id="myBtn2">STOP</button>
-    <button id="myBtn3">TEST</button>
+    <button id="myBtn">START</button> <button id="myBtn2">STOP</button> <button id="myBtn3">TEST</button>
     <br>
-    <p id="pResponse1">
+    <p id="pResponse">
+
 <script>
-document.getElementById("myBtn").addEventListener("click", _doCall);
+document.getElementById("myBtn").addEventListener("click", _startCall);
 document.getElementById("myBtn2").addEventListener("click", _endCall);
 document.getElementById("myBtn3").addEventListener("click", _test);
 
-// Set variables
 let nectarWebphone = window.nectarWebphone;
 let urlServidor = 'http://IP_Vicidial';
 let source = "CallNectarAPI"
@@ -24,8 +16,16 @@ let user = "userApi"
 let pass = "passApi"
 let numero = "telephone_client";
 let agent_user = "user_logged";
-t AGENT_API = `${urlServidor}/agc/api.php`;
+let AGENT_API = `${urlServidor}/agc/api.php`;
 let NON_AGENT = `${urlServidor}/vicidial/non_agent_api.php`;
+
+let urlSetPause = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_pause&value=PAUSE`;
+let urlValuePause = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=pause_code&value=NECTAR`;
+let urlStartCall = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_dial&phone_code=1&search=YES&preview=NO&focus=YES&value=${numero}`;
+let urlStopCall = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_hangup&value=1`;
+let urlUnsetPause = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_pause&value=RESUME`;
+let urlSetStatusCall = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_status&value=SUCESS`;
+let urlGetCallID = `${NON_AGENT}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=agent_status&stage=csv&header=YES`;
 
 let myHeaders = new Headers();
 myHeaders.append("Content-Type", "application/json");
@@ -33,96 +33,13 @@ let valueGet = {method: 'GET',mode: 'cors','Access-Control-Allow-Origin':'*'};
 
 let checkCall = null;
 let idForCall = null;
-
-// URLs Vicidial AGENT_API
-let urlSetPause = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_pause&value=PAUSE`;
-let urlValuePause = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=pause_code&value=NECTAR`;
-let urlStartCall = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_dial&phone_code=1&search=YES&preview=NO&focus=YES&value=${numero}`;
-let urlStopCall = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_hangup&value=1`;
-let urlUnsetPause = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_pause&value=RESUME`;
-
-// URLs Vicidial NON_AGENT
-let urlGetCallID = `${NON_AGENT}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=agent_status&stage=csv&header=YES`;
-let urlGetStatus = `${NON_AGENT}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=callid_info&call_id=${call_id}&stage=csv&header=YES&detail=YES`;
-
-
-// ----------------------------------- START Editing
 let loadinCall = false;
-let _getCall = function () {
-
-    let url = `${AGENT_API}chamada?id=${idForCall}&chave_api=${chaveAPI}`;
-    let valueGet = {method: 'GET',headers: myHeaders};
-
-    fetch(url, valueGet)
-        .then(function (response) {
-            return response.text().then(function (text) {
-                let resposta = text ? JSON.parse(text) : {};
-                if (response.status !== 200) {
-                    throw Error(resposta.mensagem);
-                }
-                return Promise.resolve(resposta);
-            });
-        })
-        .then(function (resposta) {
-            console.log(resposta);
-            _validateCall(resposta);
-            loadinCall = false;
-        })
-        .catch((error) => {
-            loadinCall = false;
-            handleError(error, true);
-        });
-};
 let lastStatus = null;
-let _validateCall = (callInfo) => {
-    if (callInfo && callInfo.status) {
-        let status = callInfo.status.toLowerCase(); //esse saos os possiveis status que o servico da itvix me retorna
-        let finalizar = false;
-        if(lastStatus != null && lastStatus === status){
-            return false;
-        }
-        lastStatus = status;
-        switch (status) {
-            case "agent_user chamando":
-                nectarWebphone.notify("call:preparing");
-                break;
-            case "discando":
-                nectarWebphone.notify("call:preparing");
-                break;
-            case "telefone chamando":
-                nectarWebphone.notify("call:start");
-                break;
-            case "chamada em curso":
-                nectarWebphone.notify("call:answered");
-                break;
-            case "atendida":
-                var call = {
-                    url: `${endpointBuscarLigacao}${callInfo.arquivo_audio}`
-                };
-                nectarWebphone.notify("call:end", call);
-                finalizar = true;
-                break;
-            case "nao atendida":
-                nectarWebphone.notify("call:not_answered");
-                finalizar = true;
-                break;
-            case "telefone ocupado":
-                nectarWebphone.notify("call:not_answered");
-                finalizar = true;
-                break;
-            case "a ligacao falhou":
-                nectarWebphone.notify("call:erro");
-                handleError(status, false);
-                finalizar = true;
-                break;
-        }
-        if (finalizar) {
-            cancelInterval();
-        }
-    }
-}
 
-// --------------------------------------------------------------------------  Report in pop-up
+let events = nectarWebphone.getEvents();
+events.register("call:new", _startCall);
+events.register("call:end", _endCall);
+
 let handleError = (msg, supress) => {
     if (typeof msg === 'object' && msg.message) {
         msg = msg.message;
@@ -132,60 +49,16 @@ let handleError = (msg, supress) => {
         if (!supress) {
             alert(msg);
         }
-        console.error(msg);
+        console.error(msg); 
     }
     nectarWebphone.notify("erro");
     cancelInterval();
 };
 
-let cancelInterval = function () {
-    if (checkCall) {
-        clearInterval(checkCall);
-        checkCall = null;
-        idForCall = null;
-    }
-};
-
-
-
-// ----------------------------------- STOP Editing
-
-
-
-let events = nectarWebphone.getEvents();
-events.register("call:new", _doCall);
-events.register("call:end", _endCall);
-
-
-// FUNCTION'S
-
-// TESTE Temporary
-function _test(){
-    sendGet(urlGetCallID,'2');
+function setHtmlValueResponse(valuePrint) {
+    document.getElementById("pResponse").innerHTML = valuePrint;
 }
 
-// Start call
-function _doCall(params) {
-    let nectarWebphone = window.nectarWebphone;
-    checkSetNumber();
-    checkSetUserVicidial();
-    checkAndRemovePrefixBR();
-    checkForCall(idForCall,'0');
-    sendGet(urlSetPause,'0');
-    sendGet(urlValuePause,'0');
-    sendGet(urlStartCall,'1');
-};
-
-// STOP Call
-function _endCall() {
-    checkForCall(idForCall,'1');
-    sendGet(urlStopCall,'3');
-    sendGet(urlSetPause,'0');
-    sendGet(urlValuePause,'0');
-    sendGet(urlUnsetPause,'0');
-}
-
-// For sleep
 function sleep(milliseconds) {
   var start = new Date().getTime();
   for (var i = 0; i < 1e7; i++) {
@@ -195,36 +68,28 @@ function sleep(milliseconds) {
   }
 }
 
-// Send get for URL received
-function sendGet(urlReceived,option){
+function sendRequest(urlReceived,option){
     fetch(urlReceived , valueGet, option)
     .then(response => {
         return response.text();
     }) 
-    .then(function (resposta) {
-        if (resposta.match(/ERROR: agent_status AGENT NOT LOGGED IN.*/)) { alert("Não foi encontrado ó login do usuário " + agent_user);}
+    .then(function (response) {
+        if (response.match(/ERROR: agent_status AGENT NOT LOGGED IN.*/)) { alert("Nao foi encontrado o login do usuario " + agent_user); return;}
         else{
-            if (option == 0) { ; }  
-            if (option == 1) { idForCall = resposta.id; document.getElementById("pResponse1").innerHTML = resposta; nectarWebphone.notify("call:start"); nectarWebphone.notify("call:id", {id: idForCall}); checkCall = setInterval(() => {  _getCall() }, 2000); }  
-            if (option == 2) { console.log(resposta); document.getElementById("pResponse1").innerHTML = resposta; _validateCall(resposta); loadinCall = false; }
-            if (option == 3) { console.log(resposta); endingCall = false; }
+            if (option == 0) { console.log(response.split(',')); }  
+            if (option == 1) { console.log(response.split(',')); console.log(idForCall); nectarWebphone.notify("call:start"); nectarWebphone.notify("call:id", {id: idForCall}); checkCall = setInterval(() => {  _getCall() }, 2000); }  
+            if (option == 2) { console.log(response.split(',')); idForCall = response.replace(/\n/g, "=").split('=')[1].split(',')[1]; loadinCall = false; }
+            if (option == 3) { console.log(response.split(',')); endingCall = false; }
         }
+        setHtmlValueResponse(response);
     })
     .catch((error) => {
-        if (option == 0) { ; }  
-        if (option == 1) { idForCall = null; handleError(resposta, true); }
-        if (option == 2) { loadinCall = false; handleError(error, true); } 
-        if (option == 3) { endingCall = false; handleError(error, true); } 
+        if (option == 0) { console.log(response); }  
+        if (option == 1) { idForCall = null; handleError(response, true); }
+        if ((option == 2) || (option == 3)) { endingCall = false; handleError(error, true); } 
     });
 }
 
-// Check is user it's at call
-function checkForCall(idCall,option){
-    if (option == 0) { if (idCall) { alert('Já existe uma ligação em andamento'); return false; } idForCall = true; }
-    if (option == 1) { if (!idCall) { return false; } }
-}
-
-// Check is number phone was fill 
 function checkSetNumber(){
     if (!numero) {
         alert("Numero não foi encontrado")
@@ -232,7 +97,6 @@ function checkSetNumber(){
     } 
 }
 
-// Check is user for Vicidial was fill
 function checkSetUserVicidial(){
     if (!agent_user) {
         alert("Não foi configurado o parametro referente ao usuário do Vicidial")
@@ -240,13 +104,46 @@ function checkSetUserVicidial(){
     }
 }
 
-// Remove prefix from Brasil
 function checkAndRemovePrefixBR(){
     if(numero.startsWith("+55")){
         numero = numero.substring(3, numero.length);
     }else if(numero.startsWith("55")){
         numero = numero.substring(2, numero.length);
     }
+}
+
+function _test(){
+    sendRequest(urlGetCallID,'2');
+}
+
+function _startCall(params) {
+    let nectarWebphone = window.nectarWebphone;
+
+    sendRequest(urlGetCallID,'2');sleep(1000); 
+    if (idForCall != null) { alert('Voce ja existe uma ligacao em andamento'); return; }
+    else {
+        _endCall();
+        nectarWebphone.notify("call:start");
+        checkSetNumber();
+        checkSetUserVicidial();
+        checkAndRemovePrefixBR();
+        sendRequest(urlSetPause,'0');sleep(1000);
+        sendRequest(urlValuePause,'0');sleep(1000);
+        sendRequest(urlStartCall,'0');sleep(1000);
+        sendRequest(urlGetCallID,'2');sleep(1000);
+        nectarWebphone.notify("call:answered");
+    }   
+}
+
+function _endCall() {
+    sendRequest(urlStopCall,'3'); sleep(1000);
+    sendRequest(urlSetStatusCall,'0'); sleep(1000);
+    sendRequest(urlSetPause,'0'); sleep(1000);
+    sendRequest(urlSetPause,'0'); sleep(1000);
+    sendRequest(urlValuePause,'0'); sleep(1000);
+    sendRequest(urlUnsetPause,'0'); 
+    nectarWebphone.notify("call:end", call);
+    idForCall = null;
 }
 
 </script>
