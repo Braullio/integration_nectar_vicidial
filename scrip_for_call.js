@@ -4,8 +4,6 @@ let nectarWebphone = window.nectarWebphone;
 let urlServidor = 'http://IP_Vicidial';
 let source = "CallNectarAPI"
 let user = "userApi"
-let pass = "passApi"
-let numero = "telephone_client";
 let agent_user = "user_logged";
 let AGENT_API = `${urlServidor}/agc/api.php`;
 let NON_AGENT = `${urlServidor}/vicidial/non_agent_api.php`;
@@ -108,6 +106,8 @@ function _test(){
 }
 
 function _startCall(params) {
+    let numero = params.numero;
+    let agent_user = params.ramalUsuario;
     let nectarWebphone = window.nectarWebphone;
 
     sendRequest(urlGetCallID,'2');sleep(1000); 
