@@ -63,19 +63,45 @@ function sendRequest(urlReceived,option){
         return response.text();
     }) 
     .then(function (response) {
-        if (response.match(/ERROR: agent_status AGENT NOT LOGGED IN.*/)) { alert("Nao foi encontrado o login do usuario " + agent_user); return;}
+        if (response.match(/ERROR: agent_status AGENT NOT LOGGED IN.*/)) { 
+            alert("Nao foi encontrado o login do usuario " + agent_user); 
+            return;
+        }
         else{
-            if (option == 0) { console.log(response.split(',')); }  
-            if (option == 1) { console.log(response.split(',')); console.log(idForCall); nectarWebphone.notify("call:start"); nectarWebphone.notify("call:id", {id: idForCall}); checkCall = setInterval(() => {  _getCall() }, 2000); }  
-            if (option == 2) { console.log(response.split(',')); idForCall = response.replace(/\n/g, "=").split('=')[1].split(',')[1]; loadinCall = false; }
-            if (option == 3) { console.log(response.split(',')); endingCall = false; }
+            if (option == 0) { 
+                console.log(response.split(',')); 
+            }  
+            if (option == 1) { 
+                console.log(response.split(',')); 
+                console.log(idForCall); 
+                nectarWebphone.notify("call:start"); 
+                nectarWebphone.notify("call:id", {id: idForCall}); 
+                checkCall = setInterval(() => {  _getCall() }, 2000); 
+            }  
+            if (option == 2) { 
+                console.log(response.split(',')); 
+                idForCall = response.replace(/\n/g, "=").split('=')[1].split(',')[1]; 
+                loadinCall = false; 
+            }
+            if (option == 3) { 
+                console.log(response.split(',')); 
+                endingCall = false; 
+        }
         }
         setHtmlValueResponse(response);
     })
     .catch((error) => {
-        if (option == 0) { console.log(response); }  
-        if (option == 1) { idForCall = null; handleError(response, true); }
-        if ((option == 2) || (option == 3)) { endingCall = false; handleError(error, true); } 
+        if (option == 0) { 
+            console.log(response); 
+        }  
+        if (option == 1) { 
+            idForCall = null; 
+            handleError(response, true); 
+        }
+        if ((option == 2) || (option == 3)) { 
+            endingCall = false; 
+            handleError(error, true); 
+        } 
     });
 }
 
