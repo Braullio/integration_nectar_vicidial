@@ -20,7 +20,6 @@ let myHeaders = new Headers();
 myHeaders.append("Content-Type", "application/json");
 let valueGet = {method: 'GET',mode: 'cors','Access-Control-Allow-Origin':'*'};
 
-let checkCall = null;
 let idForCall = null;
 let loadinCall = false;
 let lastStatus = null;
@@ -76,7 +75,6 @@ function sendRequest(urlReceived,option){
                 console.log(idForCall); 
                 nectarWebphone.notify("call:start"); 
                 nectarWebphone.notify("call:id", {id: idForCall}); 
-                checkCall = setInterval(() => {  _getCall() }, 2000); 
             }  
             if (option == 2) { 
                 console.log(response.split(',')); 
