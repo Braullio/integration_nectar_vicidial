@@ -1,16 +1,19 @@
 (function (window) {
 
 let nectarWebphone = window.nectarWebphone;
-let urlServidor = 'http://IP_Vicidial';
+let urlServidor = 'https://IP_Vicidial';
 let source = "CallNectarAPI"
 let user = "userApi"
-let agent_user = "user_logged";
+let pass = "passApi"
 let AGENT_API = `${urlServidor}/agc/api.php`;
 let NON_AGENT = `${urlServidor}/vicidial/non_agent_api.php`;
 
+let phone = "telephone_client";
+let agent_user = "user_logged";
+
 let urlSetPause = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_pause&value=PAUSE`;
 let urlValuePause = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=pause_code&value=NECTAR`;
-let urlStartCall = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_dial&phone_code=1&search=YES&preview=NO&focus=YES&value=${numero}`;
+let urlStartCall = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_dial&phone_code=1&search=YES&preview=NO&focus=YES&value=${phone}`;
 let urlStopCall = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_hangup&value=1`;
 let urlUnsetPause = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_pause&value=RESUME`;
 let urlSetStatusCall = `${AGENT_API}?source=${source}&user=${user}&pass=${pass}&agent_user=${agent_user}&function=external_status&value=SUCESS`;
@@ -36,16 +39,10 @@ let handleError = (msg, supress) => {
     if (msg) {
         if (!supress) {
             alert(msg);
-        }
-        console.error(msg); 
+        } 
     }
     nectarWebphone.notify("erro");
-    cancelInterval();
-};
-
-function setHtmlValueResponse(valuePrint) {
-    document.getElementById("pResponse").innerHTML = valuePrint;
-}
+ };
 
 function sleep(milliseconds) {
   var start = new Date().getTime();
@@ -57,7 +54,7 @@ function sleep(milliseconds) {
 }
 
 function sendRequest(urlReceived,option){
-    fetch(urlReceived , valueGet, option)
+    fetch(urlReceived , valueGet)
     .then(response => {
         return response.text();
     }) 
@@ -86,7 +83,6 @@ function sendRequest(urlReceived,option){
                 endingCall = false; 
         }
         }
-        setHtmlValueResponse(response);
     })
     .catch((error) => {
         if (option == 0) { 
@@ -104,8 +100,8 @@ function sendRequest(urlReceived,option){
 }
 
 function checkSetNumber(){
-    if (!numero) {
-        alert("Numero não foi encontrado")
+    if (!phone) {
+        alert("Telefone não foi encontrado")
         return false;
     } 
 }
@@ -118,10 +114,10 @@ function checkSetUserVicidial(){
 }
 
 function checkAndRemovePrefixBR(){
-    if(numero.startsWith("+55")){
-        numero = numero.substring(3, numero.length);
-    }else if(numero.startsWith("55")){
-        numero = numero.substring(2, numero.length);
+    if(phone.startsWith("+55")){
+        phone = phone.substring(3, phone.length);
+    }else if(phone.startsWith("55")){
+        phone = phone.substring(2, phone.length);
     }
 }
 
@@ -130,14 +126,10 @@ function _test(){
 }
 
 function _startCall(params) {
-    let numero = params.numero;
-    let agent_user = params.ramalUsuario;
     let nectarWebphone = window.nectarWebphone;
 
-    sendRequest(urlGetCallID,'2');sleep(1000); 
     if (idForCall != null) { alert('Voce ja existe uma ligacao em andamento'); return; }
     else {
-        _endCall();
         nectarWebphone.notify("call:start");
         checkSetNumber();
         checkSetUserVicidial();
@@ -156,8 +148,8 @@ function _endCall() {
     sendRequest(urlSetPause,'0'); sleep(1000);
     sendRequest(urlSetPause,'0'); sleep(1000);
     sendRequest(urlValuePause,'0'); sleep(1000);
-    sendRequest(urlUnsetPause,'0'); 
-    nectarWebphone.notify("call:end", call);
+    sendRequest(urlUnsetPause,'0');  sleep(1000);
+    nectarWebphone.notify("call:end"); // olha isso Lentidão
     idForCall = null;
 }
 })(window, undefined);
