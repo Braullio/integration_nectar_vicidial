@@ -149,7 +149,8 @@ function _endCall() {
     sendRequest(urlSetPause,'0'); sleep(1000);
     sendRequest(urlValuePause,'0'); sleep(1000);
     sendRequest(urlUnsetPause,'0');  sleep(1000);
-    nectarWebphone.notify("call:end"); // olha isso Lentidão
+    nectarWebphone.notify("call:end",null); // olha isso Lentidão
+    finalizar = true;
     idForCall = null;
 }
 })(window, undefined);
