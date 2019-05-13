@@ -98,14 +98,12 @@ function sendRequest(urlReceived,option){
         } 
     });
 }
-
 function checkSetNumber(){
     if (!phone) {
         alert("Telefone não foi encontrado")
         return false;
     } 
 }
-
 function checkSetUserVicidial(){
     if (!agent_user) {
         alert("Não foi configurado o parametro referente ao usuário do Vicidial")
@@ -121,36 +119,39 @@ function checkAndRemovePrefixBR(){
     }
 }
 
-function _test(){
-    sendRequest(urlGetCallID,'2');
-}
-
 function _startCall(params) {
     let nectarWebphone = window.nectarWebphone;
-
+    console.log(params.numero);
+    console.log(params.ramalUsuario);
     if (idForCall != null) { alert('Voce ja existe uma ligacao em andamento'); return; }
     else {
         nectarWebphone.notify("call:start");
         checkSetNumber();
         checkSetUserVicidial();
         checkAndRemovePrefixBR();
-        sendRequest(urlSetPause,'0');sleep(1000);
+        sendRequest(urlSetPause,'0');sleep(1050);
+        sendRequest(urlValuePause,'0');sleep(1000);
         sendRequest(urlValuePause,'0');sleep(1000);
         sendRequest(urlStartCall,'0');sleep(1000);
         sendRequest(urlGetCallID,'2');sleep(1000);
         nectarWebphone.notify("call:answered");
     }   
 }
-
+    
 function _endCall() {
-    sendRequest(urlStopCall,'3'); sleep(1000);
-    sendRequest(urlSetStatusCall,'0'); sleep(1000);
-    sendRequest(urlSetPause,'0'); sleep(1000);
-    sendRequest(urlSetPause,'0'); sleep(1000);
-    sendRequest(urlValuePause,'0'); sleep(1000);
-    sendRequest(urlUnsetPause,'0');  sleep(1000);
-    nectarWebphone.notify("call:end"); // olha isso Lentidão
-    finalizar = true;
-    idForCall = null;
+    if (idForCall != null) {
+        finalizar = true;
+        idForCall = null;
+        nectarWebphone.notify("call:end"); // olha isso Lentidão
+    }
+    else {
+        sendRequest(urlStopCall,'3'); sleep(1000);
+        sendRequest(urlSetStatusCall,'0'); sleep(1000);
+        sendRequest(urlSetPause,'0'); sleep(1000);
+        sendRequest(urlSetPause,'0'); sleep(1000);
+        sendRequest(urlValuePause,'0'); sleep(1000);
+        sendRequest(urlUnsetPause,'0');  sleep(1000);
+    }
 }
+
 })(window, undefined);
