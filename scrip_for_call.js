@@ -2,20 +2,20 @@
 
     let myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
-
     let valueGet = {method: 'GET',mode: 'cors','Access-Control-Allow-Origin':'*'};
     let nectarWebphone = window.nectarWebphone;
     let urlServidor = 'https://IP_Vicidial';
     let AGENT_API = `${urlServidor}/agc/api.php`;
     let NON_AGENT = `${urlServidor}/vicidial/non_agent_api.php`;
-    let sourceApi = "CallNectarAPI"
-    let userApi = "userApi"
-    let passApi = "passApi"
+    let sourceApi = "CallNectarAPI";
+    let userApi = "userApi";
+    let passApi = "passApi";
     let idForCall = null;
     let loadinCall = false;
     let lastStatus = null;
-    let events = nectarWebphone.getEvents();
+    let ramalUsuario = null;
 
+    let events = nectarWebphone.getEvents();
     events.register("call:new", _startCall);
     events.register("call:end", _endCall);
 
@@ -66,13 +66,13 @@
     function sleep(milliseconds) {
         var start = new Date().getTime();
         for (var i = 0; i < 1e7; i++) {
-            if ((new Date().getTime() - start) > milliseconds){
+            if ((new Date().getTime() - start) > milliseconds) {
                 break;
             }
         }
     }
 
-    function sendRequest(urlReceived,option){
+    function sendRequest(urlReceived,option) {
         fetch(urlReceived , valueGet)
         .then(response => {
             return response.text();
@@ -87,21 +87,20 @@
                     window.location.reload(false); 
                 } else {
                     if (option == 0) { 
-                        console.log(response.split(',')); 
+                        // console.log(response.split(',')); 
                     }  
                     if (option == 1) { 
-                        console.log(response.split(',')); 
-                        console.log(idForCall); 
+                        // console.log(response.split(',')); 
                         nectarWebphone.notify("call:start"); 
                         nectarWebphone.notify("call:id", {id: idForCall}); 
                     }  
                     if (option == 2) { 
-                        console.log(response.split(',')); 
+                        // console.log(response.split(',')); 
                         idForCall = response.replace(/\n/g, "=").split('=')[1].split(',')[1]; 
                         loadinCall = false; 
                     }
                     if (option == 3) { 
-                        console.log(response.split(',')); 
+                        // console.log(response.split(',')); 
                         endingCall = false; 
                     }
                 }
@@ -109,7 +108,7 @@
         })
         .catch((error) => {
             if (option == 0) { 
-                console.log(response); 
+                // console.log(response); 
             }  
             if (option == 1) { 
                 idForCall = null; 
@@ -122,7 +121,7 @@
         });
     }
 
-    function checkSetNumber(phone){
+    function checkSetNumber(phone) {
         if (!phone) {
             alert("Telefone não foi encontrado")
             return false;
@@ -131,7 +130,7 @@
         }
     }
 
-    function checkSetUserVicidial(agent_user){
+    function checkSetUserVicidial(agent_user) {
         if (!agent_user) {
             alert("Não foi configurado o parametro referente ao usuário do Vicidial")
             return false;
@@ -140,11 +139,11 @@
         }
     }
 
-    function checkAndRemovePrefixBR(phone){
-        if(phone.startsWith("+55")){
+    function checkAndRemovePrefixBR(phone) {
+        if(phone.startsWith("+55")) {
             phone = phone.substring(3, phone.length);
             return phone;
-        } else if(phone.startsWith("55")){
+        } else if(phone.startsWith("55")) {
             phone = phone.substring(2, phone.length);
             return phone;
         }
@@ -175,7 +174,6 @@
     }
 
     function _endCall(params) {
-        ramalUsuario=params.ramalUsuario;
         if (idForCall != null) {
             finalizar = true;
             idForCall = null;
